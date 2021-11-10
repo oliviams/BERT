@@ -20,8 +20,6 @@ from pysentimiento import SentimentAnalyzer
 sentiment_analyzer = SentimentAnalyzer(lang="en")
 
 
-
-
 x = list(range(1, 3))
 #x = list(range(1, 701))
 # day1 = []
@@ -59,10 +57,35 @@ for i in x:
     folder = "/Users/olivia/Dropbox//Main_Study_Combined/Separate_Files_Day_1/" + str(i)
     filepaths.append(folder)
 
-
 def process(row):
     res = sentiment_analyzer.predict(row['Line'])
     return pd.Series({'Sentiment': res.output, **res.probas})  # if we don't need all three scores, could just have highest (as have a column for top scoring sentiment)
+
+def session_list(score_list, sent):
+    empty_list_session = []
+    for session in score_list:
+        empty = []
+        for page in session:
+            if sent == 'NEU':
+                empty.append(page[0])
+            elif sent == 'NEG':
+                empty.append(page[1])
+            elif sent == 'POS':
+                empty.append(page[2])
+        empty_list_session.append(empty)
+    return(empty_list_session)
+
+def session_average(session_list, sent):
+    averages = []
+    for session in session_list:
+        averages.append(statistics.mean(session))
+    return(averages)
+
+def session_std(session_list, sent):
+    stds = []
+    for session in session_list:
+        stds.append(statistics.stdev(session))
+    return(stds)
 
 for path in filepaths:
     filelist = [file for file in glob.glob(str(path) + "/*.txt")]
@@ -98,19 +121,19 @@ for path in filepaths:
     score_list_session.append(score_list)
     print(top_sent_session)
 
+NEU_session = session_list(score_list_session, 'NEU')
+NEG_session = session_list(score_list_session, 'NEG')
+POS_session = session_list(score_list_session, 'POS')
 
-average_scores_session = []  # list of list of NEU, NEG, POS scores per session (i.e. each item is a list of three scores representing the session)
+NEU_session_average = session_average(NEU_session, 'NEU')
+NEG_session_average = session_average(NEG_session, 'NEG')
+POS_session_average = session_average(POS_session, 'POS')
 
-for session in score_list_session:
-    session_scores = []
-    for i in range(0, 3):
-        x=0
-        for page in session:
-            x=x+page[i]
-        session_scores.append(x / len(session))
-    average_scores_session.append(x/len(session_scores))
+NEU_session_std = session_std(NEU_session, 'NEU')
+NEG_session_std = session_std(NEG_session, 'NEG')
+POS_session_std = session_std(POS_session, 'POS')
 
-print(average_scores_session)
+# Need to do the same for emotion
 
 
 
