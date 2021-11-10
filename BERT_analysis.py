@@ -28,7 +28,7 @@ x = list(range(1, 3))
 # day3 = []
 # day4 = []
 # day5 = []
-valence_scores = []
+valence_scores = [] #  list of lists of top sentiment and the average for that sentiment
 sent_list = [] # list with top sentiment per webpage within list of sessions
 top_sent_session = [] # top sentiment per session
 score_list_session = [] #each session, list of average of NEU, NEG, POS scores per webpage
@@ -60,7 +60,7 @@ for i in x:
 
 def process(row):
     res = sentiment_analyzer.predict(row['Line'])
-    return pd.Series({'Sentiment': res.output, **res.probas})  # if we don't need all three scores, could just have highest (as have a column for top scoring sentiment)
+    return pd.Series({'Sentiment': res.output, **res.probas})
 
 def session_list(score_list, sent):
     empty_list_session = []
@@ -108,19 +108,14 @@ for path in filepaths:
                 df_lines = pd.DataFrame(flat_list_sent, columns=['Line'])
                 df_lines = df_lines.join(df_lines.apply(process, axis=1)) # creates a dataframe per file with file columns: sentence, overall sentimes, sentiment score (NEU, NEG, POS)
                 df_lines = df_lines.append(df_lines[['NEU', 'NEG', 'POS']].mean(), ignore_index=True)
-                top_sent.append(str(df_lines['Sentiment'].mode()[0]))
-                top_sent_score.append(df_lines.iloc[-1][str(df_lines['Sentiment'].mode()[0])])
-                file_scores.append(str(df_lines['Sentiment'].mode()[0]))
-                file_scores.append(df_lines.iloc[-1][str(df_lines['Sentiment'].mode()[0])]) # shouldn't we be printing column name of highest average
-                valence_scores.append(file_scores) # need to separate this into individuals, currently list of lists but not subdivided by participant
+                top_sent.append(str(df_lines.iloc[-1].astype(float).idxmax()))
+                top_sent_score.append(df_lines.iloc[-1][str(df_lines.iloc[-1].astype(float).idxmax())])
+                file_scores.append(str(df_lines.iloc[-1].astype(float).idxmax()))
+                file_scores.append(df_lines.iloc[-1][str(df_lines.iloc[-1].astype(float).idxmax())])
+                valence_scores.append(file_scores)
                 score_list.append([df_lines.iloc[-1]['NEU'], df_lines.iloc[-1]['NEG'], df_lines.iloc[-1]['POS']])
-                print(df_lines)
-                # print(top_sent)
-                # print(top_sent_score)
-                # print(valence_scores)
-    print(score_list)
     sent_list.append(top_sent)
-    top_sent_session.append(mode(top_sent))
+    # top_sent_session.append(mode(top_sent))
     score_list_session.append(score_list)
     print(top_sent_session)
 
