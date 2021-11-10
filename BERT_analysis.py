@@ -8,10 +8,11 @@ import numpy as np
 import glob
 import re
 from statistics import mode
+import statistics
 
-# import nltk
-# nltk.download('punkt')
-# from nltk import sent_tokenize
+import nltk
+nltk.download('punkt')
+from nltk import sent_tokenize
 
 
 import pip
@@ -40,15 +41,15 @@ score_list_session = [] #each session, list of average of NEU, NEG, POS scores p
 #     result = model(tokens)
 #     return int(torch.argmax(result.logits))+1
 
-# def text_preprocessing(text):
-#     text = text.lower()
-#     text = re.sub("@\\w+", "", text)
-#     text = re.sub("https?://.+", "", text)
-#     text = re.sub("\\d+\\w*\\d*", "", text)
-#     text = re.sub("#\\w+", "", text)
-#     # text = re.sub("\U000+", "", text) # emojis?
-#     # text = re.sub("\N{+", "", text) # emojis?
-#     return(text)
+def text_preprocessing(text):
+    text = text.lower()
+    text = re.sub("@\\w+", "", text)
+    text = re.sub("https?://.+", "", text)
+    text = re.sub("\\d+\\w*\\d*", "", text)
+    text = re.sub("#\\w+", "", text)
+    # text = re.sub("\U000+", "", text) # emojis?
+    # text = re.sub("\N{+", "", text) # emojis?
+    return(text)
 
 filepaths=[]
 
@@ -99,11 +100,13 @@ for path in filepaths:
             file_scores = []
             with open(file, encoding = 'latin1') as f:
                 lines = f.readlines() # lines is a list of all the lines in a given file
-                #lines = text_preprocessing(lines)  # need to make sure this applies to list, not only string
-                #lines_list = []
+                sent_split = [sent_tokenize(x) for x in lines]
+                flat_list_sent = [item for sublist in sent_split for item in sublist]
+                flat_list_sent = [tab.replace("\t", "") for tab in flat_list_sent]
+                flat_list_sent = [text_preprocessing(x) for x in flat_list_sent]
 
-                df_lines = pd.DataFrame(lines, columns=['Line'])
-                df_lines = df_lines.join(df_lines.apply(process, axis=1)) # creates a dataframe per file with file columns: line, overall sentimes, sentiment score (NEU, NEG, POS)
+                df_lines = pd.DataFrame(flat_list_sent, columns=['Line'])
+                df_lines = df_lines.join(df_lines.apply(process, axis=1)) # creates a dataframe per file with file columns: sentence, overall sentimes, sentiment score (NEU, NEG, POS)
                 df_lines = df_lines.append(df_lines[['NEU', 'NEG', 'POS']].mean(), ignore_index=True)
                 top_sent.append(str(df_lines['Sentiment'].mode()[0]))
                 top_sent_score.append(df_lines.iloc[-1][str(df_lines['Sentiment'].mode()[0])])
