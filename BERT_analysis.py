@@ -23,23 +23,10 @@ sentiment_analyzer = SentimentAnalyzer(lang="en")
 
 x = list(range(1, 3))
 #x = list(range(1, 701))
-# day1 = []
-# day2 = []
-# day3 = []
-# day4 = []
-# day5 = []
 valence_scores = [] #  list of lists of top sentiment and the average for that sentiment
 sent_list = [] # list with top sentiment per webpage within list of sessions
 top_sent_session = [] # top sentiment per session
 score_list_session = [] #each session, list of average of NEU, NEG, POS scores per webpage
-
-# tokenizer = AutoTokenizer.from_pretrained('finiteautomata/bertweet-base-sentiment-analysis')
-# model = AutoModelForSequenceClassification.from_pretrained('finiteautomata/bertweet-base-sentiment-analysis')
-#
-# def valence_score(text):
-#     tokens = tokenizer.encode(text, return_tensors='pt')
-#     result = model(tokens)
-#     return int(torch.argmax(result.logits))+1
 
 def text_preprocessing(text):
     text = text.lower()
@@ -131,7 +118,17 @@ NEU_session_std = session_std(NEU_session, 'NEU')
 NEG_session_std = session_std(NEG_session, 'NEG')
 POS_session_std = session_std(POS_session, 'POS')
 
-# Need to do the same for emotion
+df_averages = pd.DataFrame(
+    {'NEU average': NEU_session_average,
+     'NEG average': NEG_session_average,
+     'POS average': POS_session_average
+    })
+
+df_std = pd.DataFrame(
+    {'NEU std': NEU_session_std,
+     'NEG std': NEG_session_std,
+     'POS std': POS_session_std
+    })
 
 
 
