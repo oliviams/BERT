@@ -12,7 +12,7 @@ pip.main(['install', 'pysentimiento'])
 from pysentimiento import SentimentAnalyzer
 sentiment_analyzer = SentimentAnalyzer(lang="en")
 
-x = list(range(1, 3))
+x = list(range(1, 6))
 #x = list(range(1, 701))
 score_list_session = [] #each session, list of average of NEU, NEG, POS scores per webpage
 
@@ -66,7 +66,7 @@ for path in filepaths:
     score_list = []
     if len(filelist) == 0:
         pass
-    else:
+    else: # may be worth printing last bit of filepath / iteration it is on to match up the session
         for file in filelist:
             with open(file, encoding = 'latin1') as f:
                 lines = f.readlines() # lines is a list of all the lines in a given file
