@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import glob
 import re
 import statistics
@@ -32,7 +33,7 @@ for i in x:
     filepaths.append(folder)
 
 def process(row):
-    res = sentiment_analyzer.predict(row['Line'])
+    res = sentiment_analyzer.predict(row['Sentence'])
     return pd.Series({'Sentiment': res.output, **res.probas})
 
 def session_list(score_list, sent):
@@ -52,21 +53,30 @@ def session_list(score_list, sent):
 def session_average(session_list):
     averages = []
     for session in session_list:
-        averages.append(statistics.mean(session))
+        try:
+            averages.append(statistics.mean(session))
+        except:
+            averages.append(np.nan)
     return(averages)
+
 
 def session_std(session_list):
     stds = []
     for session in session_list:
-        stds.append(statistics.stdev(session))
+        try:
+            stds.append(statistics.stdev(session))
+        except:
+            stds.append(np.nan)
     return(stds)
 
 for path in filepaths:
     filelist = [file for file in glob.glob(str(path) + "/*.txt")]
     score_list = []
     if len(filelist) == 0:
+        print(path)
         pass
-    else: # may be worth printing last bit of filepath / iteration it is on to match up the session
+    elif len(filelist) != 0: # may be worth printing last bit of filepath / iteration it is on to match up the session
+        print('Not empty: '+path)
         for file in filelist:
             with open(file, encoding = 'latin1') as f:
                 lines = f.readlines() # lines is a list of all the lines in a given file
@@ -75,18 +85,20 @@ for path in filepaths:
                 flat_list_sent = [tab.replace("\t", "") for tab in flat_list_sent]
                 flat_list_sent = [text_preprocessing(x) for x in flat_list_sent]
 
-                df_lines = pd.DataFrame(flat_list_sent, columns=['Line'])
+                df_lines = pd.DataFrame(flat_list_sent, columns=['Sentence'])
                 df_lines = df_lines.join(df_lines.apply(process, axis=1)) # creates a dataframe per file with file columns: sentence, overall sentimes, sentiment score (NEU, NEG, POS)
                 df_lines = df_lines.append(df_lines[['NEU', 'NEG', 'POS']].mean(), ignore_index=True)
                 score_list.append([df_lines.iloc[-1]['NEU'], df_lines.iloc[-1]['NEG'], df_lines.iloc[-1]['POS']])
     score_list_session.append(score_list)
     print(score_list_session)
 
-NEU_session = session_list(score_list_session, 'NEU')
+# for each sentiment, give a list of lists --> average webpage scores for that sentiment within list of sessions
+NEU_session = session_list(score_list_session, 'NEU') # [[x, x, x, x, x], [x, x, x], [x, x, x, x, x, x, x]]
 NEG_session = session_list(score_list_session, 'NEG')
 POS_session = session_list(score_list_session, 'POS')
 
-NEU_session_average = session_average(NEU_session)
+# for each sentiment, average for that sentiment per session
+NEU_session_average = session_average(NEU_session) # gave error for empty list - but shouldn't contain empty values?
 NEG_session_average = session_average(NEG_session)
 POS_session_average = session_average(POS_session)
 
@@ -100,6 +112,7 @@ df_averages = pd.DataFrame(
      'POS average': POS_session_average
     })
 df_averages['Top Sentiment'] = df_averages.idxmax(axis=1)
+df_averages['Top Sentiment'] = df_averages['Top Sentiment'].str.replace('average', '')
 
 
 df_std = pd.DataFrame(
