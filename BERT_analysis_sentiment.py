@@ -73,10 +73,8 @@ for path in filepaths:
     filelist = [file for file in glob.glob(str(path) + "/*.txt")]
     score_list = []
     if len(filelist) == 0:
-        print(path)
         pass
     elif len(filelist) != 0: # may be worth printing last bit of filepath / iteration it is on to match up the session
-        print('Not empty: '+path)
         for file in filelist:
             with open(file, encoding = 'latin1') as f:
                 lines = f.readlines() # lines is a list of all the lines in a given file
@@ -90,7 +88,7 @@ for path in filepaths:
                 df_lines = df_lines.append(df_lines[['NEU', 'NEG', 'POS']].mean(), ignore_index=True)
                 score_list.append([df_lines.iloc[-1]['NEU'], df_lines.iloc[-1]['NEG'], df_lines.iloc[-1]['POS']])
     score_list_session.append(score_list)
-    print(score_list_session)
+    # print(score_list_session)
 
 # for each sentiment, give a list of lists --> average webpage scores for that sentiment within list of sessions
 NEU_session = session_list(score_list_session, 'NEU') # [[x, x, x, x, x], [x, x, x], [x, x, x, x, x, x, x]]
