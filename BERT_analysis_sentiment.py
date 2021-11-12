@@ -9,13 +9,10 @@ nltk.download('punkt')
 from nltk import sent_tokenize
 
 import pip
-pip.main(['install', 'pysentimiento'])
+pip.main(['install', 'openpyxl'])
+# pip.main(['install', 'pysentimiento'])
 from pysentimiento import SentimentAnalyzer
 sentiment_analyzer = SentimentAnalyzer(lang="en")
-
-x = list(range(1, 6))
-#x = list(range(1, 701))
-score_list_session = [] #each session, list of average of NEU, NEG, POS scores per webpage
 
 def text_preprocessing(text):
     text = text.lower()
@@ -24,13 +21,6 @@ def text_preprocessing(text):
     text = re.sub("\\d+\\w*\\d*", "", text)
     text = re.sub("#\\w+", "", text)
     return(text)
-
-filepaths=[]
-
-for i in x:
-    #folder = "/Users/chriskelly/Dropbox/Chris_Information_Seeking_Studies/Web_Browsing_Study/Main_Study_Combined/Separate_Files_Day_1/" + str(i)
-    folder = "/Users/olivia/Dropbox//Main_Study_Combined/Separate_Files_Day_1/" + str(i)
-    filepaths.append(folder)
 
 def process(row):
     res = sentiment_analyzer.predict(row['Sentence'])
@@ -59,7 +49,6 @@ def session_average(session_list):
             averages.append(np.nan)
     return(averages)
 
-
 def session_std(session_list):
     stds = []
     for session in session_list:
@@ -69,12 +58,23 @@ def session_std(session_list):
             stds.append(np.nan)
     return(stds)
 
-for path in filepaths:
+x = list(range(1, 6))
+# x = list(range(1, 701))
+score_list_session = [] #each session, list of average of NEU, NEG, POS scores per webpage
+filepaths=[]
+participants=[]
+
+for i in x:
+    #folder = "/Users/chriskelly/Dropbox/Chris_Information_Seeking_Studies/Web_Browsing_Study/Main_Study_Combined/Separate_Files_Day_1/" + str(i)
+    folder = "/Users/olivia/Dropbox//Main_Study_Combined/Separate_Files_Day_1/" + str(i)
+    filepaths.append(folder)
+
+for path in filepaths: # will it break when it reaches filepath that doesnt exist?
     filelist = [file for file in glob.glob(str(path) + "/*.txt")]
     score_list = []
     if len(filelist) == 0:
         pass
-    elif len(filelist) != 0: # may be worth printing last bit of filepath / iteration it is on to match up the session
+    else: # may be worth printing last bit of filepath / iteration it is on to match up the session
         for file in filelist:
             with open(file, encoding = 'latin1') as f:
                 lines = f.readlines() # lines is a list of all the lines in a given file
@@ -88,6 +88,7 @@ for path in filepaths:
                 df_lines = df_lines.append(df_lines[['NEU', 'NEG', 'POS']].mean(), ignore_index=True)
                 score_list.append([df_lines.iloc[-1]['NEU'], df_lines.iloc[-1]['NEG'], df_lines.iloc[-1]['POS']])
     score_list_session.append(score_list)
+    participants.append(path.split("/")[-1])
     # print(score_list_session)
 
 # for each sentiment, give a list of lists --> average webpage scores for that sentiment within list of sessions
@@ -111,6 +112,7 @@ df_averages = pd.DataFrame(
     })
 df_averages['Top Sentiment'] = df_averages.idxmax(axis=1)
 df_averages['Top Sentiment'] = df_averages['Top Sentiment'].str.replace('average', '')
+df_averages.index = participants
 
 
 df_std = pd.DataFrame(
@@ -118,9 +120,12 @@ df_std = pd.DataFrame(
      'NEG std': NEG_session_std,
      'POS std': POS_session_std
     })
+df_std.index = participants
 
 print(df_averages)
+df_averages.to_excel("sentiment_averages.xlsx")
 print(df_std)
+df_std.to_excel("sentiment_stds.xlsx")
 
 
 
